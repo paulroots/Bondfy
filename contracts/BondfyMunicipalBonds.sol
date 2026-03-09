@@ -4,10 +4,10 @@ pragma solidity ^0.8.24;
 import {ERC721A} from "erc721a/contracts/ERC721A.sol";
 
 /**
- * @title BondFiMunicipalBonds
- * @notice ERC721A bond NFTs for municipality projects issued through BondFi/BlockFi.
+ * @title BondfyMunicipalBonds
+ * @notice ERC721A bond NFTs for municipality projects issued through Bondfy.
  */
-contract BondFiMunicipalBonds is ERC721A {
+contract BondfyMunicipalBonds is ERC721A {
     enum BuyerType {
         Unspecified,
         Citizen,
@@ -34,7 +34,7 @@ contract BondFiMunicipalBonds is ERC721A {
         bool active;
     }
 
-    address public blockfiOperator;
+    address public bondfyOperator;
     address public owner;
     uint256 public platformFeeBps = 100; // 1.00%
     uint256 public accruedPlatformFees;
@@ -49,7 +49,7 @@ contract BondFiMunicipalBonds is ERC721A {
     mapping(address => BuyerType) public buyerTypes;
     mapping(address => bool) public approvedPlatformContracts;
 
-    event BlockfiOperatorUpdated(address indexed oldOperator, address indexed newOperator);
+    event BondfyOperatorUpdated(address indexed oldOperator, address indexed newOperator);
     event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
     event MunicipalityRegistered(uint256 indexed municipalityId, string name, address indexed treasury);
     event MunicipalityStatusUpdated(uint256 indexed municipalityId, bool active);
@@ -76,8 +76,8 @@ contract BondFiMunicipalBonds is ERC721A {
         _;
     }
 
-    modifier onlyBlockfiOrOwner() {
-        require(msg.sender == owner || msg.sender == blockfiOperator, "Not BondFi/BlockFi");
+    modifier onlyBondfyOrOwner() {
+        require(msg.sender == owner || msg.sender == bondfyOperator, "Not Bondfy");
         _;
     }
 
@@ -95,10 +95,10 @@ contract BondFiMunicipalBonds is ERC721A {
         _lock = 1;
     }
 
-    constructor(address initialBlockfiOperator, address initialOwner) ERC721A("BondFi Municipal Bond", "BOND") {
+    constructor(address initialBondfyOperator, address initialOwner) ERC721A("Bondfy Municipal Bond", "BOND") {
         require(initialOwner != address(0), "Invalid owner");
         owner = initialOwner;
-        blockfiOperator = initialBlockfiOperator;
+        bondfyOperator = initialBondfyOperator;
         emit OwnershipTransferred(address(0), initialOwner);
     }
 
@@ -112,9 +112,9 @@ contract BondFiMunicipalBonds is ERC721A {
         owner = newOwner;
     }
 
-    function setBlockfiOperator(address newOperator) external onlyOwner {
-        emit BlockfiOperatorUpdated(blockfiOperator, newOperator);
-        blockfiOperator = newOperator;
+    function setBondfyOperator(address newOperator) external onlyOwner {
+        emit BondfyOperatorUpdated(bondfyOperator, newOperator);
+        bondfyOperator = newOperator;
     }
 
     function setPlatformFeeBps(uint256 newFeeBps) external onlyOwner {
@@ -131,7 +131,7 @@ contract BondFiMunicipalBonds is ERC721A {
 
     function registerMunicipality(string calldata name, string calldata jurisdiction, address treasury)
         external
-        onlyBlockfiOrOwner
+        onlyBondfyOrOwner
         returns (uint256 municipalityId)
     {
         require(treasury != address(0), "Invalid treasury");
@@ -147,7 +147,7 @@ contract BondFiMunicipalBonds is ERC721A {
         emit MunicipalityRegistered(municipalityId, name, treasury);
     }
 
-    function setMunicipalityActive(uint256 municipalityId, bool active) external onlyBlockfiOrOwner {
+    function setMunicipalityActive(uint256 municipalityId, bool active) external onlyBondfyOrOwner {
         require(municipalityId > 0 && municipalityId < nextMunicipalityId, "Municipality not found");
         municipalities[municipalityId].active = active;
         emit MunicipalityStatusUpdated(municipalityId, active);
@@ -189,7 +189,7 @@ contract BondFiMunicipalBonds is ERC721A {
         require(s.maxSupply > 0, "Series not found");
 
         Municipality memory m = municipalities[s.municipalityId];
-        require(msg.sender == owner || msg.sender == blockfiOperator || msg.sender == m.treasury, "Not authorized");
+        require(msg.sender == owner || msg.sender == bondfyOperator || msg.sender == m.treasury, "Not authorized");
 
         s.active = active;
     }
@@ -198,20 +198,20 @@ contract BondFiMunicipalBonds is ERC721A {
         buyerTypes[msg.sender] = buyerType;
     }
 
-    function setBuyerTypeFor(address buyer, BuyerType buyerType) external onlyBlockfiOrOwner {
+    function setBuyerTypeFor(address buyer, BuyerType buyerType) external onlyBondfyOrOwner {
         require(buyer != address(0), "Invalid buyer");
         buyerTypes[buyer] = buyerType;
     }
 
     /**
-     * @notice Citizens and organizations buy municipal bond NFTs via BondFi.
+     * @notice Citizens and organizations buy municipal bond NFTs via Bondfy.
      */
     function buyBonds(uint256 seriesId, uint256 quantity) external payable nonReentrant {
         _buyBonds(seriesId, quantity, msg.sender);
     }
 
     /**
-     * @notice Approved BondFi platform contracts can route purchases for beneficiaries.
+     * @notice Approved Bondfy platform contracts can route purchases for beneficiaries.
      */
     function buyBondsFor(address beneficiary, uint256 seriesId, uint256 quantity) external payable nonReentrant {
         require(approvedPlatformContracts[msg.sender], "Platform not approved");

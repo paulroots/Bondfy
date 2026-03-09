@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-interface IBondFiMunicipalBonds {
+interface IBondfyMunicipalBonds {
     enum BuyerType {
         Unspecified,
         Citizen,
@@ -13,20 +13,20 @@ interface IBondFiMunicipalBonds {
 }
 
 /**
- * @title BondFiDigitalPlatform
+ * @title BondfyDigitalPlatform
  * @notice Platform-facing contract for managed/KYC investor purchases.
  */
-contract BondFiDigitalPlatform {
+contract BondfyDigitalPlatform {
     struct InvestorProfile {
         bool active;
         bool kycVerified;
-        IBondFiMunicipalBonds.BuyerType buyerType;
+        IBondfyMunicipalBonds.BuyerType buyerType;
     }
 
     address public owner;
     mapping(address => bool) public operators;
     mapping(address => InvestorProfile) public investors;
-    IBondFiMunicipalBonds public immutable municipalBonds;
+    IBondfyMunicipalBonds public immutable municipalBonds;
 
     uint256 private _lock = 1;
 
@@ -36,7 +36,7 @@ contract BondFiDigitalPlatform {
         address indexed investor,
         bool active,
         bool kycVerified,
-        IBondFiMunicipalBonds.BuyerType buyerType
+        IBondfyMunicipalBonds.BuyerType buyerType
     );
     event ManagedPurchase(
         uint256 indexed seriesId,
@@ -68,7 +68,7 @@ contract BondFiDigitalPlatform {
         require(initialOwner != address(0), "Invalid owner");
         require(municipalBondsAddress != address(0), "Invalid bonds");
         owner = initialOwner;
-        municipalBonds = IBondFiMunicipalBonds(municipalBondsAddress);
+        municipalBonds = IBondfyMunicipalBonds(municipalBondsAddress);
         emit OwnershipTransferred(address(0), initialOwner);
     }
 
@@ -88,7 +88,7 @@ contract BondFiDigitalPlatform {
         address investor,
         bool active,
         bool kycVerified,
-        IBondFiMunicipalBonds.BuyerType buyerType
+        IBondfyMunicipalBonds.BuyerType buyerType
     ) external onlyOperatorOrOwner {
         require(investor != address(0), "Invalid investor");
         investors[investor] = InvestorProfile({active: active, kycVerified: kycVerified, buyerType: buyerType});

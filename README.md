@@ -1,10 +1,10 @@
-# BondFi Smart Contracts
+# Bondfy Smart Contracts
 
-Solidity contracts for municipal bond issuance and managed bond purchases through the BondFi digital platform.
+Solidity contracts for municipal bond issuance and managed bond purchases through the Bondfy digital platform.
 
 ## Contracts
 
-### `BondFiMunicipalBonds`
+### `BondfyMunicipalBonds`
 
 ERC721A-based municipal bond NFT contract.
 
@@ -16,9 +16,9 @@ Key features:
 - Buyer classification (`setBuyerType`, `setBuyerTypeFor`)
 - Platform fee accounting and withdrawal (`setPlatformFeeBps`, `withdrawPlatformFees`)
 
-### `BondFiDigitalPlatform`
+### `BondfyDigitalPlatform`
 
-Platform operations contract that routes purchases into `BondFiMunicipalBonds`.
+Platform operations contract that routes purchases into `BondfyMunicipalBonds`.
 
 Key features:
 - Owner/operator access model (`setOperator`)
@@ -28,19 +28,19 @@ Key features:
 
 ## Required Setup Sequence
 
-1. Deploy `BondFiMunicipalBonds` with:
-- `initialBlockfiOperator`
+1. Deploy `BondfyMunicipalBonds` with:
+- `initialBondfyOperator`
 - `initialOwner`
 
-2. Deploy `BondFiDigitalPlatform` with:
+2. Deploy `BondfyDigitalPlatform` with:
 - `initialOwner`
-- deployed `BondFiMunicipalBonds` address
+- deployed `BondfyMunicipalBonds` address
 
-3. Authorize the platform contract in `BondFiMunicipalBonds`:
-- `setApprovedPlatformContract(<BondFiDigitalPlatform>, true)`
+3. Authorize the platform contract in `BondfyMunicipalBonds`:
+- `setApprovedPlatformContract(<BondfyDigitalPlatform>, true)`
 
-4. Ensure `BondFiDigitalPlatform` can update buyer type metadata:
-- Set `blockfiOperator` in `BondFiMunicipalBonds` to the platform contract address using `setBlockfiOperator(...)`
+4. Ensure `BondfyDigitalPlatform` can update buyer type metadata:
+- Set `bondfyOperator` in `BondfyMunicipalBonds` to the platform contract address using `setBondfyOperator(...)`
   or
 - Keep a trusted operator/owner account that calls `setBuyerTypeFor(...)` directly in the bond contract
 
@@ -55,10 +55,10 @@ Key features:
 ## Purchase Flows
 
 ### Direct User Purchase
-- User calls `buyBonds(seriesId, quantity)` on `BondFiMunicipalBonds` with exact ETH (`priceWei * quantity`).
+- User calls `buyBonds(seriesId, quantity)` on `BondfyMunicipalBonds` with exact ETH (`priceWei * quantity`).
 
 ### Managed Platform Purchase
-- Operator/owner calls `purchaseMunicipalBonds(investor, seriesId, quantity)` on `BondFiDigitalPlatform` with exact ETH.
+- Operator/owner calls `purchaseMunicipalBonds(investor, seriesId, quantity)` on `BondfyDigitalPlatform` with exact ETH.
 - Platform forwards ETH to `buyBondsFor(...)` and mints NFTs directly to `investor`.
 
 ## Notes
@@ -70,5 +70,5 @@ Key features:
 
 ## Source Files
 
-- `contracts/BondFiMunicipalBonds.sol`
-- `contracts/BondFiDigitalPlatform.sol`
+- `contracts/BondfyMunicipalBonds.sol`
+- `contracts/BondfyDigitalPlatform.sol`
