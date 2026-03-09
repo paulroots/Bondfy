@@ -47,6 +47,7 @@ contract BondFiMunicipalBonds is ERC721A {
     mapping(uint256 => BondSeries) public bondSeries;
     mapping(uint256 => uint256) public tokenToBondSeries;
     mapping(address => BuyerType) public buyerTypes;
+    mapping(address => bool) public approvedPlatformContracts;
 
     event BlockfiOperatorUpdated(address indexed oldOperator, address indexed newOperator);
     event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
@@ -68,6 +69,7 @@ contract BondFiMunicipalBonds is ERC721A {
     );
     event PlatformFeeUpdated(uint256 oldFeeBps, uint256 newFeeBps);
     event PlatformFeesWithdrawn(address indexed to, uint256 amount);
+    event PlatformContractApprovalUpdated(address indexed platformContract, bool approved);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Not owner");
@@ -119,6 +121,12 @@ contract BondFiMunicipalBonds is ERC721A {
         require(newFeeBps <= 2_000, "Fee too high"); // max 20%
         emit PlatformFeeUpdated(platformFeeBps, newFeeBps);
         platformFeeBps = newFeeBps;
+    }
+
+    function setApprovedPlatformContract(address platformContract, bool approved) external onlyOwner {
+        require(platformContract != address(0), "Invalid platform");
+        approvedPlatformContracts[platformContract] = approved;
+        emit PlatformContractApprovalUpdated(platformContract, approved);
     }
 
     function registerMunicipality(string calldata name, string calldata jurisdiction, address treasury)
@@ -190,10 +198,28 @@ contract BondFiMunicipalBonds is ERC721A {
         buyerTypes[msg.sender] = buyerType;
     }
 
+    function setBuyerTypeFor(address buyer, BuyerType buyerType) external onlyBlockfiOrOwner {
+        require(buyer != address(0), "Invalid buyer");
+        buyerTypes[buyer] = buyerType;
+    }
+
     /**
      * @notice Citizens and organizations buy municipal bond NFTs via BondFi.
      */
     function buyBonds(uint256 seriesId, uint256 quantity) external payable nonReentrant {
+        _buyBonds(seriesId, quantity, msg.sender);
+    }
+
+    /**
+     * @notice Approved BondFi platform contracts can route purchases for beneficiaries.
+     */
+    function buyBondsFor(address beneficiary, uint256 seriesId, uint256 quantity) external payable nonReentrant {
+        require(approvedPlatformContracts[msg.sender], "Platform not approved");
+        require(beneficiary != address(0), "Invalid beneficiary");
+        _buyBonds(seriesId, quantity, beneficiary);
+    }
+
+    function _buyBonds(uint256 seriesId, uint256 quantity, address beneficiary) internal {
         BondSeries storage s = bondSeries[seriesId];
         require(s.maxSupply > 0, "Series not found");
         require(s.active, "Series inactive");
@@ -208,7 +234,7 @@ contract BondFiMunicipalBonds is ERC721A {
 
         uint256 startTokenId = _nextTokenId();
         s.sold += quantity;
-        _mint(msg.sender, quantity);
+        _mint(beneficiary, quantity);
 
         for (uint256 i = 0; i < quantity; i++) {
             tokenToBondSeries[startTokenId + i] = seriesId;
@@ -221,7 +247,7 @@ contract BondFiMunicipalBonds is ERC721A {
         (bool ok, ) = payable(m.treasury).call{value: proceeds}("");
         require(ok, "Municipality transfer failed");
 
-        emit BondPurchased(seriesId, msg.sender, buyerTypes[msg.sender], quantity, totalPrice);
+        emit BondPurchased(seriesId, beneficiary, buyerTypes[beneficiary], quantity, totalPrice);
     }
 
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
