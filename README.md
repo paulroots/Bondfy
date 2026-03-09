@@ -1,4 +1,4 @@
-# BondFi Smart Contracts
+# BondFy Smart Contracts
 
 Solidity contracts for municipal bond issuance and managed bond purchases through the Bondfy digital platform.
 
