@@ -1,10 +1,10 @@
-# Bondfy Smart Contracts
+# BondFi Smart Contracts
 
 Solidity contracts for municipal bond issuance and managed bond purchases through the Bondfy digital platform.
 
 ## Contracts
 
-### `BondfyMunicipalBonds`
+### `BondFiMunicipalBonds`
 
 ERC721A-based municipal bond NFT contract.
 
